@@ -1,82 +1,71 @@
-// Récupération des données de l'API
-fetch("http://127.0.0.1:5000/api/stats/mmr/ab4bb6e8002a4d309d18debc667af4a6?playlist=Doubles%20(Ranked)")
-    .then(response => response.json())
-    .then(data => {
-        // On trie les données par date croissante
-        data.sort((a, b) => new Date(a.date) - new Date(b.date));
+let mmrChart, otherChart;
 
-        // Extraction des labels (dates) et des valeurs
-        const dates = data.map(item => item.date);
-        const mmrData = data.map(item => item.mmr);
+const playerSelect = document.getElementById('playerSelect');
 
-        // Mapping pour convertir le rank en valeur numérique (plus la valeur est élevée, meilleur est le rank)
-        const rankMapping = {
-            "Platinum I": 1,
-            "Platinum II": 2
-        };
-        const rankData = data.map(item => rankMapping[item.rank] || 0);
+document.addEventListener('DOMContentLoaded', loadUsers);
+playerSelect.addEventListener('change', () => loadPlayerCharts(playerSelect.value));
 
-        // Création du graphique avec deux axes des ordonnées
-        const ctx = document.getElementById('chart').getContext('2d');
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: dates,
-                datasets: [{
+function loadUsers() {
+    fetch("http://127.0.0.1:5000/api/users")
+        .then(response => response.json())
+        .then(users => {
+            users.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user.epic_id;
+                option.textContent = user.username;
+                playerSelect.appendChild(option);
+            });
+            if (users.length > 0) loadPlayerCharts(users[0].epic_id);
+        })
+        .catch(error => console.error("Error loading users:", error));
+}
+
+function loadPlayerCharts(epicId) {
+    loadMMRChart(epicId);
+}
+
+function loadMMRChart(epicId) {
+    fetch(`http://127.0.0.1:5000/api/stats/mmr/${epicId}?playlist=Doubles%20(Ranked)`)
+        .then(response => response.json())
+        .then(data => {
+            data.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            const dates = data.map(item => item.date);
+            const mmrData = data.map(item => item.mmr);
+
+            // Crée un nouveau graphique
+            const ctx = document.getElementById('mmr').getContext('2d');
+
+            if (mmrChart) mmrChart.destroy(); // Détruit l'ancien graphique si existant
+
+            mmrChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
                         label: 'MMR',
                         data: mmrData,
                         borderColor: 'red',
-                        yAxisID: 'mmr',
                         fill: false,
                         tension: 0.1
-                    },
-                    {
-                        label: 'Rank',
-                        data: rankData,
-                        borderColor: 'blue',
-                        yAxisID: 'rank',
-                        fill: false,
-                        tension: 0.1
-                    }
-                ]
-            },
-            options: {
-                scales: {
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Date'
-                        }
-                    },
-                    rank: {
-                        type: 'linear',
-                        position: 'left',
-                        title: {
-                            display: true,
-                            text: 'Rank'
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: {
+                            ticks: { color: '#bbbbbb' },
+                            grid: { color: '#444444' },
+                            title: { display: true, text: 'Date', color: '#bbbbbb' }
                         },
-                        ticks: {
-                            // Réaffiche le label du rank à partir de la valeur numérique
-                            callback: function (value) {
-                                if (value === 1) return 'Platinum I';
-                                if (value === 2) return 'Platinum II';
-                                return value;
-                            }
-                        }
-                    },
-                    mmr: {
-                        type: 'linear',
-                        position: 'right',
-                        title: {
-                            display: true,
-                            text: 'MMR'
-                        },
-                        grid: {
-                            drawOnChartArea: false // Pour éviter la superposition des grilles
+                        y: {
+                            ticks: { color: '#bbbbbb' },
+                            grid: { color: '#444444' },
+                            title: { display: true, text: 'MMR', color: '#bbbbbb' }
                         }
                     }
                 }
-            }
-        });
-    })
-    .catch(error => console.error("Erreur lors de la récupération des données :", error));
+            });
+        })
+        .catch(error => console.error("Error loading MMR data:", error));
+}
+

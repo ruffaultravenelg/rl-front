@@ -1,21 +1,40 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mon Application Flask</title>
+    <title>Rocket League Tracker</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
+
+    <!-- HEADER -->
     <header>
-        <h1>Bienvenue dans mon application Flask</h1>
+        <h1>Rocket League Tracker</h1>
+        <select id="playerSelect">
+        </select>
     </header>
+
+    <!-- Zone d'affichage du graphique MMR -->
     <main>
-        <h2>Graphique des données</h2>
-        <canvas id="chart" width="400" height="200"></canvas>
+
+        <div class="chart">
+            <h2>Niveau MMR</h2>
+            <canvas id="mmr"></canvas>
+        </div>
+
+        <div class="chart">
+            <h2>Niveau MMR</h2>
+            <canvas id="mmr"></canvas>
+        </div>
+
     </main>
 
+    <!-- SCRIPT -->
     <script src="{{ url_for('static', filename='scripts/app.js') }}"></script>
+
 </body>
+
 </html>
