@@ -4,31 +4,37 @@
 <head>
     <meta charset="UTF-8">
     <title>Rocket League Tracker</title>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='images/favicon.png') }}" type="image/x-icon">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
 
-    <!-- HEADER -->
-    <header>
-        <h1>Rocket League Tracker</h1>
-        <select id="playerSelect">
-        </select>
-    </header>
+    <!-- NAVIGUATION -->
+    <nav>
 
-    <!-- Zone d'affichage du graphique MMR -->
+        <div class="section">
+            <p class="categorie">Joueur</p>
+            <select id="player_selector">
+            </select>
+        </div>
+
+        <div class="section">
+            <p class="categorie">Mode de jeu</p>
+            <select id="playlist_selector">
+            </select>
+        </div>
+
+        <div class="section" id="graphs">
+            <p class="categorie">Graphiques</p>
+
+        </div>
+
+    </nav>
+
+    <!-- CHARTS -->
     <main>
-
-        <div class="chart">
-            <h2>Niveau MMR</h2>
-            <canvas id="mmr"></canvas>
-        </div>
-
-        <div class="chart">
-            <h2>Niveau MMR</h2>
-            <canvas id="mmr"></canvas>
-        </div>
 
     </main>
 
