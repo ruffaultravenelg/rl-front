@@ -96,8 +96,7 @@ main{
 
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    padding: 30px;
+    gap: 60px;
     overflow-y: auto;
     padding: 40px;
 }

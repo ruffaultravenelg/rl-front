@@ -1,40 +1,16 @@
-// Fetch users
-const player_selector = document.getElementById('player_selector');
-player_selector.innerHTML = '';
-fetch('/api/users')
-    .then(response => response.json())
-    .then(data => {
-        data.forEach(user => {
-            const option = document.createElement('option');
-            option.value = user.epic_id;
-            option.text = user.username;
-            player_selector.appendChild(option);
-        });
-    });
-
-// Fetch playlist
-const playlist_selector = document.getElementById('playlist_selector');
-playlist_selector.innerHTML = '';
-fetch('/api/playlists')
-    .then(response => response.json())
-    .then(data => {
-        data.forEach(playlist => {
-            const option = document.createElement('option');
-            option.value = playlist;
-            option.text = playlist;
-            playlist_selector.appendChild(option);
-        });
-    });
+// Constants
+const TENSION = 0;
 
 // Setup graphs
 const graphs = [
+    ["Rank", rankGraph],
     ["MMR", mmrGraph],
-    ["Rank", rankGraph]
 ]
 
 
 // Load graph checkbox
 const graphs_section = document.getElementById('graphs');
+var first = true;
 for (graph of graphs) {
     const checkboxDiv = document.createElement('div');
     checkboxDiv.className = 'checkbox';
@@ -47,7 +23,7 @@ for (graph of graphs) {
     checkboxLabel.htmlFor = graph[0];
     checkboxLabel.textContent = graph[0];
 
-    checkboxDiv.addEventListener('click', (e)=>{
+    checkboxDiv.addEventListener('click', (e) => {
         if (e.target != checkboxDiv) return;
         checkboxInput.click();
     });
@@ -56,6 +32,12 @@ for (graph of graphs) {
     checkboxDiv.appendChild(checkboxLabel);
 
     graphs_section.appendChild(checkboxDiv);
+
+    if (first) {
+        checkboxInput.checked = true;
+        first = false;
+    }
+
 }
 
 // Set refresh action for each input in nav
@@ -98,6 +80,37 @@ function refreshContent() {
 
 }
 
+// Fetch users
+const player_selector = document.getElementById('player_selector');
+player_selector.innerHTML = '';
+fetch('/api/users')
+    .then(response => response.json())
+    .then(data => {
+        data.forEach(user => {
+            const option = document.createElement('option');
+            option.value = user.epic_id;
+            option.text = user.username;
+            player_selector.appendChild(option);
+        });
+        player_selector.value = data[0].epic_id;
+    });
+
+// Fetch playlist
+const playlist_selector = document.getElementById('playlist_selector');
+playlist_selector.innerHTML = '';
+fetch('/api/playlists')
+    .then(response => response.json())
+    .then(data => {
+        data.forEach(playlist => {
+            const option = document.createElement('option');
+            option.value = playlist;
+            option.text = playlist;
+            playlist_selector.appendChild(option);
+        });
+        playlist_selector.value = data[0];
+        refreshContent();
+    });
+
 // GET call
 async function get(url) {
     const response = await fetch(url);
@@ -119,7 +132,7 @@ async function mmrGraph(container, epic_id, playlist) {
     const data = await get(url);
     const labels = data.map(item => item.date);
     const mmrData = data.map(item => item.mmr);
-   
+
     const ctx = canvas.getContext('2d');
     new Chart(ctx, {
         type: 'line',
@@ -132,7 +145,7 @@ async function mmrGraph(container, epic_id, playlist) {
                 borderColor: '#2D4ACA',
                 borderWidth: 1,
                 fill: false,
-                tension: 0.2
+                tension: TENSION
             }]
         },
         options: {
@@ -154,65 +167,80 @@ async function rankGraph(container, epic_id, playlist) {
     container.appendChild(canvas);
 
     const url = `/rank?user=${encodeURIComponent(epic_id)}&playlist=${encodeURIComponent(playlist)}`;
+    const rankData = await get(url);
     /*
     Api result :    
-    [{"date":"11/03/2025","rank":"Platinum II - 1"},{"date":"12/03/2025","rank":"Platinum II - 1"},{"date":"13/03/2025","rank":"Platinum II - 2"},{"date":"14/03/2025","rank":"Platinum III - 2"},{"date":"15/03/2025","rank":"Platinum III - 2"},{"date":"16/03/2025","rank":"Platinum II - 4"},{"date":"17/03/2025","rank":"Platinum III - 3"},{"date":"18/03/2025","rank":"Platinum III - 3"}]    */
+    [{"date":"11/03/2025","rank":"Platinum II", division: 2}, ...]
+    */
 
-    const rankData = await get(url);
-    
-    // Définition d'un ordre numérique pour les ranks
-    const rankOrder = {
-        "Bronze I": 1, "Bronze II": 2, "Bronze III": 3,
-        "Silver I": 4, "Silver II": 5, "Silver III": 6,
-        "Gold I": 7, "Gold II": 8, "Gold III": 9,
-        "Platinum I": 10, "Platinum II": 11, "Platinum III": 12,
-        "Diamond I": 13, "Diamond II": 14, "Diamond III": 15,
-        "Champion I": 16, "Champion II": 17, "Champion III": 18,
-        "Grand Champion I": 19, "Grand Champion II": 20, "Grand Champion III": 21,
-        "Supersonic Legend": 22
-      };
-  
-      // Transformation des données pour Chart.js
-      const labels = rankData.map(entry => entry.date);
-      const values = rankData.map(entry => {
-        const [rank, division] = entry.rank.split(" - ");
-        return rankOrder[rank] * 4 + parseInt(division); // On pondère avec les divisions
-      });
-  
-      // Création du graphique
-      const ctx = canvas.getContext('2d');
-      new Chart(ctx, {
+    // Ranks order
+    const rankOrder = [
+        "Bronze I",
+        "Bronze II",
+        "Bronze III",
+        "Silver I",
+        "Silver II",
+        "Silver III",
+        "Gold I",
+        "Gold II",
+        "Gold III",
+        "Platinum I",
+        "Platinum II",
+        "Platinum III",
+        "Diamond I",
+        "Diamond II",
+        "Diamond III",
+        "Champion I",
+        "Champion II",
+        "Champion III",
+        "Grand Champion I",
+        "Grand Champion II",
+        "Grand Champion III",
+        "Supersonic Legend"
+    ];
+
+    const labels = rankData.map(item => item.date);
+    const rankValues = rankData.map(item => rankOrder.indexOf(item.rank) + (item.division * 0.25 - 0.25));
+
+    const ctx = canvas.getContext('2d');
+    new Chart(ctx, {
         type: 'line',
         data: {
-          labels: labels,
-          datasets: [{
-            label: 'Évolution du Rank',
-            data: values,
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            borderColor: 'rgba(75, 192, 192, 1)',
-            borderWidth: 2,
-            fill: false,
-            tension: 0.1
-          }]
+            labels: labels,
+            datasets: [{
+                label: 'Rank par jour',
+                data: rankValues,
+                backgroundColor: '#4caf5083',
+                borderColor: '#4CAF50',
+                borderWidth: 1,
+                fill: false,
+                tension: TENSION
+            }]
         },
         options: {
-          scales: {
-            y: {
-              ticks: {
-                callback: function(value) {
-                  // Conversion inverse du nombre vers un label de rank
-                  const rankEntries = Object.entries(rankOrder);
-                  for (let i = rankEntries.length - 1; i >= 0; i--) {
-                    const [rank, baseValue] = rankEntries[i];
-                    if (value >= baseValue * 4 && value < (baseValue + 1) * 4) {
-                      return rank + " - " + (value % 4 || 4);
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    ticks: {
+                        callback: function(value, index, values) {
+                            return rankOrder[Math.round(value)];
+                        },
+                        stepSize: 1
                     }
-                  }
-                  return value;
                 }
-              }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const rankIndex = Math.floor(context.parsed.y);
+                            const division = Math.round((context.parsed.y - rankIndex) * 4 + 1);
+                            return `${rankOrder[rankIndex]} Division ${division}`;
+                        }
+                    }
+                }
             }
-          }
         }
-      });
+    });
+
 }

@@ -95,7 +95,7 @@ def get_rank():
         conn.close()
 
         rank_data = [
-            {"date": "/".join(date.split("-")[::-1]), "rank": f"{rank} - {division}"}
+            {"date": "/".join(date.split("-")[::-1]), "rank": rank, "division": division}
             for date, rank, division in data
         ]
         return jsonify(rank_data)
